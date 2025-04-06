@@ -13,7 +13,7 @@ import {
     deleteItem,
     bulkUpdateQuantity, // Signature: (file: File) => Promise<any>
 } from "@/lib/api/items"; // Adjust path if needed
-import { getUsersAndRoles, assignUserRole } from "@/lib/api/users"; // Adjust path if needed
+import { getUsersAndRoles, assignUserRole, getUserRole } from "@/lib/api/users"; // Adjust path if needed
 import { getMonthlyInventoryReport } from "@/lib/api/reports"; // Adjust path if needed
 import { getLowStockAlerts } from "@/lib/api/alerts"; // Adjust path if needed
 import { getAuditLogs } from "@/lib/api/audit"; // Adjust path if needed
@@ -168,7 +168,7 @@ export default function ApiTestButtons() {
     const testItemId2 = "c5531d6e-63fa-4c8b-989d-f8134968c588";
     const testItemId3 = "c5531d6e-63fa-4c8b-989d-f8134968c588";
     const testItemIdToDelete = "c5531d6e-63fa-4c8b-989d-f8134968c588";
-    const testUserId1 = "REPLACE_WITH_REAL_USER_ID_1"; // From Supabase Auth users
+    const testUserId1 = "f7e60bf8-9e48-4e97-b76b-16905fd20e96"; // From Supabase Auth users
 
     return (
         <div>
@@ -266,7 +266,14 @@ export default function ApiTestButtons() {
             <ApiCallTest
                 buttonText="Get Users & Roles"
                 description="Fetches a list of users and their assigned roles."
-                apiFunction={getUsersAndRoles}
+                apiFunction={() => getUsersAndRoles()}
+            />
+
+            {/* GET /api/users/<user_id>/role */}
+            <ApiCallTest
+                buttonText={`Get Users Role (uuid: ${testUserId1})`}
+                description="Get the role for a specific user."
+                apiFunction={() => getUserRole(testUserId1)}
             />
 
             {/* PUT /api/users/<user_id>/role */}

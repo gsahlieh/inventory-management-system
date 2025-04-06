@@ -619,6 +619,60 @@ def get_users():
         abort(500, description="Failed to retrieve user list due to a server error.")
 
 
+@app.route('/api/users/<uuid:user_id>/role', methods=['GET'])
+@token_required
+@roles_required('admin', 'manager', 'viewer')
+def get_user_role(user_id):
+    """Get the role of a specific user."""
+    target_user_id = str(user_id) # Ensure it's a string for comparison
+    logging.debug(f"Attempting to fetch role for user_id: {target_user_id}")
+
+    try:
+        # Fetch the user's role from the user_roles table
+        result = supabase.table("user_roles") \
+            .select("role") \
+            .eq("user_id", target_user_id) \
+            .maybe_single() \
+            .execute()
+
+        # Check if data was returned
+        if not result.data:
+            # Before returning 404, quickly check if the user exists in auth.users
+            # This distinguishes between "user exists but has no role" and "user doesn't exist"
+            try:
+                user_check = supabase.auth.admin.get_user_by_id(target_user_id)
+                if user_check:
+                     logging.warning(f"User {target_user_id} exists in auth but not in user_roles table.")
+                     # Depending on policy, you might return 404 or 403 (role not assigned)
+                     abort(404, description="User role not found or assigned.")
+                else:
+                    # This case should be rare if user_id is a valid UUID from auth
+                    logging.warning(f"User {target_user_id} not found in auth system either.")
+                    abort(404, description="User not found.")
+            except Exception as auth_e:
+                 # Handle potential errors from get_user_by_id (e.g., user not found error)
+                 if "User not found" in str(auth_e):
+                      logging.warning(f"User {target_user_id} not found in auth system.")
+                      abort(404, description="User not found.")
+                 else:
+                      logging.error(f"Error checking user existence in auth: {auth_e}")
+                      # Fallback to original 404 if auth check fails unexpectedly
+                      abort(404, description="User role not found.")
+
+
+        user_role = result.data.get("role")
+        if not user_role:
+             # This case means the record exists but the role column is null/empty
+             logging.warning(f"Role data is missing for user_id: {target_user_id}")
+             abort(404, description="User role data is incomplete.")
+
+        logging.debug(f"Successfully fetched role '{user_role}' for user_id: {target_user_id}")
+        return jsonify({"user_id": target_user_id, "role": user_role}), 200
+
+    except Exception as e:
+        logging.exception(f"Error fetching role for user {target_user_id}: {e}")
+        abort(500, description="Failed to retrieve user role due to a server error.")
+
 @app.route('/api/users/<uuid:user_id>/role', methods=['PUT'])
 @token_required
 # @roles_required('admin')
