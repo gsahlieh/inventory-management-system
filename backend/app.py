@@ -52,7 +52,10 @@ except Exception as e:
 
 # --- Flask App Initialization ---
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": FRONTEND_URL}})
+
+allowed_origin = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+logging.info(f"Configuring CORS for origin: {allowed_origin}")
+CORS(app, resources={r"/api/*": {"origins": allowed_origin}}, supports_credentials=True)
 
 # --- Constants ---
 LOW_STOCK_THRESHOLD = 10
@@ -884,32 +887,11 @@ def get_item_trends(item_id):
                       labels.append(timestamp)
                       quantities.append(quantity)
 
-        # Add current quantity as the last point if the last log isn't current
-        # (Optional, but often useful for charts)
-        # current_item = supabase.table("items").select("quantity, updated_at").eq("id", str(item_id)).maybe_single().execute()
-        # if current_item.data and (not labels or labels[-1] < current_item.data['updated_at']):
-        #      labels.append(current_item.data['updated_at'])
-        #      quantities.append(current_item.data['quantity'])
-
-
         return jsonify({"labels": labels, "quantities": quantities})
 
     except Exception as e:
         logging.error(f"Error fetching trends for item {item_id}: {e}")
         abort(500, description="Failed to retrieve item trends.")
-
-# --- TODO: Bonus Feature: Notifications ---
-# This would typically involve:
-# 1. A function `send_low_stock_notification(item)`
-# 2. Integrating an email library (e.g., SendGrid, Mailgun) or push notification service.
-# 3. Calling this function from `update_item_quantity` and `bulk_update_quantity`
-#    when quantity drops below LOW_STOCK_THRESHOLD.
-# 4. Consider using background tasks (Celery, RQ) for sending notifications
-#    to avoid blocking the API request.
-# Example placeholder:
-# def send_low_stock_notification(item_id, item_name, quantity):
-#     logging.info(f"NOTIFICATION: Item {item_name} (ID: {item_id}) is low on stock ({quantity})!")
-#     # Add email/push logic here
 
 
 # --- Base Route ---
@@ -919,7 +901,7 @@ def home():
     return jsonify({"message": "Flask inventory backend is running!"})
 
 # --- Run the App ---
-if __name__ == '__main__':
-    # Use debug=True for development ONLY, it enables auto-reloading and detailed errors
-    # Set host='0.0.0.0' to make it accessible on your network (e.g., from Next.js dev server)
-    app.run(host='0.0.0.0', port=5001, debug=True)
+# if __name__ == '__main__':
+#     # Use debug=True for development ONLY, it enables auto-reloading and detailed errors
+#     # Set host='0.0.0.0' to make it accessible on your network (e.g., from Next.js dev server)
+#     app.run(host='0.0.0.0', port=5001, debug=True)

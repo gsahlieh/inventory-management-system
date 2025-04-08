@@ -9,46 +9,58 @@ interface ApiCallOptions {
 }
 
 export async function makeApiCall(endpoint: string, options: ApiCallOptions) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  // Determine if running on the server or client
+  const isServer = typeof window === "undefined";
 
-  if (!apiUrl) {
-    throw new Error(
-      "API base URL is not configured (NEXT_PUBLIC_API_BASE_URL)."
-    );
+  // Get the appropriate base URL
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL; // For client
+  const internalApiUrl = process.env.INTERNAL_API_BASE_URL; // For server
+
+  const baseUrl = isServer ? internalApiUrl : publicApiUrl;
+  const urlVariableName = isServer
+    ? "INTERNAL_API_BASE_URL"
+    : "NEXT_PUBLIC_API_BASE_URL";
+
+  // Check if the required base URL is configured
+  if (!baseUrl) {
+    console.error(`API base URL (${urlVariableName}) is not configured.`);
+    throw new Error(`API base URL (${urlVariableName}) is not configured.`);
   }
 
-  let token: string | null = null;
+  let token: string | null = options.authToken || null; // Prioritize passed token
 
-  // 1. Get token: Prioritize provided token, otherwise fetch using client SDK
-  if (options.authToken) {
-    token = options.authToken;
-    console.log("Using provided auth token for API call.");
-  } else {
+  // If no token was passed AND we are on the client-side, try fetching via SDK
+  // Server-side calls MUST have the token passed via options.authToken
+  if (!token && !isServer) {
     console.log(
-      "No auth token provided, attempting to fetch session via client SDK..."
+      "No auth token provided on client, attempting to fetch session via client SDK..."
     );
-    // This branch will primarily be used if makeApiCall is ever called from client-side code
-    const supabase = createClient(); // Use client for session fetching if no token given
+    const supabase = createClient();
     const {
       data: { session },
       error: sessionError,
     } = await supabase.auth.getSession();
 
     if (sessionError) {
-      // Log the specific session error for better debugging
       console.error("Error getting session via client SDK:", sessionError);
+      // Depending on your app's needs, you might allow calls without a session
+      // or throw an error. Sticking with throwing for now.
       throw new Error(`Error getting session: ${sessionError.message}`);
     }
-    if (!session) {
-      console.error("No active session found via client SDK.");
-      throw new Error("You must be logged in.");
+    if (session) {
+      token = session.access_token;
+      console.log("Fetched session token via client SDK.");
     }
-    token = session.access_token;
-    console.log("Fetched session token via client SDK.");
+    // If still no session client-side, we might proceed if the endpoint allows anonymous access,
+    // or throw if auth is always required.
   }
 
+  // If still no token after checks (especially crucial server-side), throw error.
   if (!token) {
-    // This should theoretically not be reached if the logic above is sound
+    // You might want to allow certain public API endpoints, but for protected ones:
+    console.error(
+      "Authentication token could not be obtained. Ensure it's passed for server-side calls or a session exists client-side."
+    );
     throw new Error("Authentication token could not be obtained.");
   }
 
@@ -58,9 +70,12 @@ export async function makeApiCall(endpoint: string, options: ApiCallOptions) {
   };
 
   if (options.isFormData) {
-    // Don't set Content-Type for FormData
+    // Don't set Content-Type for FormData; browser does it with boundary
   } else {
-    headers["Content-Type"] = "application/json";
+    // Only set Content-Type if there's a body and it's not FormData
+    if (options.body) {
+      headers["Content-Type"] = "application/json";
+    }
   }
 
   let bodyToSend: BodyInit | null = null;
@@ -70,39 +85,42 @@ export async function makeApiCall(endpoint: string, options: ApiCallOptions) {
       : JSON.stringify(options.body);
   }
 
-  // 3. Make fetch request
+  // 3. Make fetch request (using the dynamically determined baseUrl)
   console.log(
-    `Making API call to: ${apiUrl}${endpoint} with method ${options.method}`
+    `Making API call (${isServer ? "server" : "client"}) to: ${baseUrl}${endpoint} with method ${options.method}`
   );
-  const response = await fetch(`${apiUrl}${endpoint}`, {
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     method: options.method,
     headers: headers,
     body: bodyToSend,
-    // Important for server components: prevent Next.js from caching fetch results inappropriately
-    // if your API calls should always be fresh based on the user's current state.
-    // Use 'no-store' if the data changes frequently and shouldn't be cached.
-    // Use 'force-cache' or remove this line if caching is desired (default).
+    // Keep cache: 'no-store' if you always want fresh data, especially for server components
     cache: "no-store",
   });
 
   // 4. Handle response (keep existing logic)
-  const responseBody = await response.text();
+  const responseBody = await response.text(); // Read body once
 
   if (!response.ok) {
     let errorData: any = { message: `HTTP error ${response.status}` };
     try {
       const parsedJson = JSON.parse(responseBody);
-      errorData.message = parsedJson?.error || `HTTP error ${response.status}`;
+      // Use a more specific error message from backend if available
+      errorData.message =
+        parsedJson?.error ||
+        parsedJson?.message ||
+        `HTTP error ${response.status}`;
       errorData.details = parsedJson;
     } catch (e) {
+      // If parsing fails, use the raw text or default message
       errorData.message = responseBody || errorData.message;
       console.warn("Response body is not valid JSON:", responseBody);
     }
     console.error(
       `API Error (${response.status}) calling ${endpoint}: ${errorData.message}`,
-      errorData.details
+      errorData.details || "" // Log details if available
     );
-    // Make error more specific if possible
+
+    // Throw specific errors based on status code
     if (response.status === 401) {
       throw new Error(
         `API call failed (401 Unauthorized): ${errorData.message}. Check token validity or API permissions.`
@@ -113,15 +131,22 @@ export async function makeApiCall(endpoint: string, options: ApiCallOptions) {
         `API call failed (403 Forbidden): ${errorData.message}. Check API permissions.`
       );
     }
+    // Generic error for other statuses
     throw new Error(
       `API call failed (${response.status}): ${errorData.message}`
     );
   }
 
+  // Attempt to parse JSON only if responseBody is not empty
+  if (!responseBody) {
+    return { success: true }; // Or null, or whatever indicates success without data
+  }
+
   try {
-    return responseBody ? JSON.parse(responseBody) : { success: true };
+    return JSON.parse(responseBody);
   } catch (e) {
     console.warn("Could not parse JSON response body:", responseBody);
+    // Return the raw response if JSON parsing fails but status was OK
     return { success: true, rawResponse: responseBody };
   }
 }
