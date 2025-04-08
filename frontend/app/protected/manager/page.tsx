@@ -1,6 +1,7 @@
+// manager/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react"; // Added useMemo
+import { useState, useEffect, useRef, useMemo } from "react"; // Ensured useMemo is imported
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import {
   bulkUpdateQuantity
 } from "@/lib/api/items";
 import { getLowStockAlerts } from "@/lib/api/alerts";
-import { getItemTrends } from "@/lib/api/chart";
+import { getItemTrends } from "@/lib/api/chart"; // Ensured getItemTrends is imported
 import { getUserRole } from "@/lib/api/users";
 
 // Import Chart.js components and Line chart type
@@ -51,6 +52,8 @@ export default function ManagerDashboard() {
   const [bulkUpdateStatus, setBulkUpdateStatus] = useState<any>(null);
   const [editingQuantity, setEditingQuantity] = useState<any>(null);
   const [newQuantity, setNewQuantity] = useState<number>(0);
+
+  // --- Trend Chart State ---
   const [selectedItemForTrend, setSelectedItemForTrend] = useState<
     string | null
   >(null);
@@ -59,7 +62,6 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     const checkManager = async () => {
-      // ... (keep existing useEffect logic)
       const {
         data: { session },
         error
@@ -87,7 +89,7 @@ export default function ManagerDashboard() {
           setLoading(false); // Set loading false before redirecting
         } else {
           await fetchItems(); // Wait for items to load before setting loading false
-          setLoading(false); // Set loading false ONLY if admin check passes and initial data is loaded
+          setLoading(false); // Set loading false ONLY if manager check passes and initial data is loaded
         }
       } catch (err) {
         router.push("/protected");
@@ -124,8 +126,13 @@ export default function ManagerDashboard() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    if (tab === "inventory") fetchItems();
-    if (tab === "alerts") fetchAlerts();
+    // Reset specific loading states when changing tabs
+    setTrendLoading(false);
+    setSelectedItemForTrend(null); // Close trend modal if open
+
+    if (tab === "inventory" && items.length === 0) fetchItems(); // Fetch only if not already loaded
+    if (tab === "alerts" && alerts.length === 0) fetchAlerts();
+    // No need to fetch for bulk tab
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,20 +181,19 @@ export default function ManagerDashboard() {
     }
   };
 
+  // --- Trend Chart Handlers ---
   const handleViewTrends = async (itemId: string) => {
     try {
       setTrendLoading(true); // Use specific loading state
       setSelectedItemForTrend(itemId);
       setTrendData(null); // Clear previous data
       const data = await getItemTrends(itemId);
-      // Format timestamps for better readability (optional but recommended)
+      // Format timestamps for better readability
       const formattedData = {
         ...data,
         labels: data.labels.map((ts: string) =>
           new Date(ts).toLocaleDateString()
-        ) // Example: '4/5/2025'
-        // Or use toLocaleString() for date and time
-        // labels: data.labels.map((ts: string) => new Date(ts).toLocaleString()),
+        )
       };
       setTrendData(formattedData);
     } catch (error) {
@@ -203,7 +209,7 @@ export default function ManagerDashboard() {
     setTrendData(null);
   };
 
-  // Chart configuration - useMemo to prevent recalculation on every render
+  // --- Chart Configuration ---
   const chartOptions = useMemo(
     () => ({
       responsive: true,
@@ -255,7 +261,7 @@ export default function ManagerDashboard() {
 
   return (
     <div className="flex-1 w-full flex flex-col gap-6">
-      {/* ... (keep existing header and tabs) */}
+      {/* Header */}
       <div className="w-full">
         <div className="bg-accent text-sm p-4 rounded-md text-foreground">
           <h1 className="font-semibold text-xl mb-2">Manager Dashboard</h1>
@@ -266,6 +272,7 @@ export default function ManagerDashboard() {
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="flex gap-2 border-b pb-2">
         <Button
           variant={activeTab === "inventory" ? "default" : "outline"}
@@ -291,12 +298,14 @@ export default function ManagerDashboard() {
       {activeTab === "inventory" && (
         <div className="space-y-6">
           <h2 className="text-lg font-medium">Update Inventory Quantities</h2>
-          {items.length === 0 ? (
+          {loading && items.length === 0 ? (
+            <p>Loading items...</p>
+          ) : items.length === 0 ? (
             <p>No items found</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-300">
-                {/* ... (keep table header) */}
+                {/* Table Header */}
                 <thead>
                   <tr>
                     <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -316,6 +325,7 @@ export default function ManagerDashboard() {
                     </th>
                   </tr>
                 </thead>
+                {/* Table Body */}
                 <tbody className="divide-y divide-gray-200">
                   {items.map((item) => (
                     <tr key={item.id}>
@@ -334,18 +344,22 @@ export default function ManagerDashboard() {
                       <td className="px-3 py-4 whitespace-nowrap space-x-2">
                         <Button
                           size="sm"
+                          variant="secondary"
+                          onClick={() => handleViewTrends(item.id)}
+                          disabled={
+                            trendLoading && selectedItemForTrend === item.id
+                          } // Disable button while loading its trend
+                        >
+                          {trendLoading && selectedItemForTrend === item.id
+                            ? "Loading..."
+                            : "Trends"}
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleEditQuantity(item)}
                         >
                           Update Quantity
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleViewTrends(item.id)}
-                          disabled={trendLoading && selectedItemForTrend === item.id} // Disable button while loading its trend
-                        >
-                          {trendLoading && selectedItemForTrend === item.id ? 'Loading...' : 'View Trends'}
                         </Button>
                       </td>
                     </tr>
@@ -355,16 +369,15 @@ export default function ManagerDashboard() {
             </div>
           )}
 
-          {/* Trends Modal */}
-          {selectedItemForTrend && ( // Keep modal structure open once an item is selected
+          {/* --- Trends Modal --- */}
+          {selectedItemForTrend && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-background p-6 rounded-lg w-full max-w-3xl">
+              <div className="bg-background p-6 rounded-lg w-full max-w-3xl shadow-lg">
                 <h2 className="text-lg font-medium mb-4">
                   Inventory Trends for{" "}
                   {items.find((i) => i.id === selectedItemForTrend)?.name ||
                     "Item"}
                 </h2>
-
                 {/* Chart Area */}
                 <div className="relative h-64 mb-4 border rounded-lg p-2">
                   {trendLoading ? (
@@ -381,7 +394,6 @@ export default function ManagerDashboard() {
                     </div>
                   )}
                 </div>
-
                 {/* Optional: Raw Data Display */}
                 {trendData && !trendLoading && (
                   <div className="mt-4">
@@ -391,7 +403,6 @@ export default function ManagerDashboard() {
                     </pre>
                   </div>
                 )}
-
                 <div className="flex justify-end mt-6">
                   <Button variant="outline" onClick={handleCloseTrendModal}>
                     Close
@@ -400,11 +411,11 @@ export default function ManagerDashboard() {
               </div>
             </div>
           )}
+          {/* --- End Trends Modal --- */}
         </div>
       )}
 
       {/* Edit Quantity Modal */}
-      {/* ... (keep existing Edit Quantity Modal JSX) */}
       {editingQuantity && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-background p-6 rounded-lg w-full max-w-md">
@@ -440,7 +451,6 @@ export default function ManagerDashboard() {
       )}
 
       {/* Low Stock Alerts */}
-      {/* ... (keep existing Low Stock Alerts JSX) */}
       {activeTab === "alerts" && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
@@ -448,7 +458,9 @@ export default function ManagerDashboard() {
             <Button onClick={() => fetchAlerts()}>Refresh Alerts</Button>
           </div>
 
-          {alerts.length === 0 ? (
+          {loading && alerts.length === 0 ? (
+            <p>Loading alerts...</p>
+          ) : alerts.length === 0 ? (
             <div className="bg-green-50 text-green-700 p-4 rounded-md">
               <p className="font-medium">No low stock alerts</p>
               <p className="text-sm">
@@ -505,7 +517,6 @@ export default function ManagerDashboard() {
       )}
 
       {/* Bulk Update */}
-      {/* ... (keep existing Bulk Update JSX) */}
       {activeTab === "bulk" && (
         <div className="space-y-4">
           <div className="border p-4 rounded-md">
