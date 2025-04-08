@@ -16,6 +16,12 @@ export async function makeApiCall(endpoint: string, options: ApiCallOptions) {
   const publicApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL; // For client
   const internalApiUrl = process.env.INTERNAL_API_BASE_URL; // For server
 
+  console.log(
+    "NEXT_PUBLIC_API_BASE_URL:",
+    process.env.NEXT_PUBLIC_API_BASE_URL
+  );
+  console.log("INTERNAL_API_BASE_URL:", process.env.INTERNAL_API_BASE_URL);
+
   const baseUrl = isServer ? internalApiUrl : publicApiUrl;
   const urlVariableName = isServer
     ? "INTERNAL_API_BASE_URL"
