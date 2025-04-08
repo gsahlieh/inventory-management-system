@@ -61,7 +61,6 @@ CORS(app, resources={r"/api/*": {"origins": allowed_origin}}, supports_credentia
 LOW_STOCK_THRESHOLD = 10
 
 # --- Helper Functions ---
-
 def log_audit(action, table_name=None, record_id=None, old_values=None, new_values=None, success=True):
     """Logs an action to the audit_logs table."""
     user_id = getattr(g, 'user_id', None)
@@ -237,8 +236,8 @@ def internal_server_error(e):
 
 # == Inventory Items ==
 @app.route('/api/items', methods=['POST'])
-@token_required # Uses the new validation method
-# @roles_required('admin')
+@token_required
+@roles_required('admin')
 def add_item():
     """Admin: Add a new item to inventory."""
     data = request.get_json()
@@ -275,7 +274,7 @@ def add_item():
 
 @app.route('/api/items', methods=['GET'])
 @token_required
-# @roles_required('admin', 'manager', 'viewer')
+@roles_required('admin', 'manager', 'viewer')
 def get_items():
     """Admin/Manager/Viewer: List all inventory items."""
     try:
@@ -289,7 +288,7 @@ def get_items():
 
 @app.route('/api/items/<uuid:item_id>', methods=['GET'])
 @token_required
-# @roles_required('admin', 'manager', 'viewer')
+@roles_required('admin', 'manager', 'viewer')
 def get_item(item_id):
     """Admin/Manager/Viewer: Get details of a specific item."""
     try:
@@ -304,7 +303,7 @@ def get_item(item_id):
 
 @app.route('/api/items/<uuid:item_id>', methods=['PUT'])
 @token_required
-# @roles_required('admin')
+@roles_required('admin', 'manager')
 def update_item(item_id):
     """Admin: Update all details of a specific item."""
     data = request.get_json()
@@ -360,7 +359,7 @@ def update_item(item_id):
 
 @app.route('/api/items/<uuid:item_id>/quantity', methods=['PATCH'])
 @token_required
-# @roles_required('admin', 'manager')
+@roles_required('admin', 'manager')
 def update_item_quantity(item_id):
     """Admin/Manager: Update only the quantity of an item."""
     data = request.get_json()
@@ -408,7 +407,7 @@ def update_item_quantity(item_id):
 
 @app.route('/api/items/<uuid:item_id>', methods=['DELETE'])
 @token_required
-# @roles_required('admin')
+@roles_required('admin')
 def delete_item(item_id):
     """Admin: Delete an inventory item."""
     try:
@@ -435,7 +434,7 @@ def delete_item(item_id):
 
 @app.route('/api/items/bulk-update-quantity', methods=['POST'])
 @token_required
-# @roles_required('admin', 'manager')
+@roles_required('manager')
 def bulk_update_quantity():
     """Admin/Manager: Bulk update quantities via CSV upload."""
     if 'file' not in request.files:
@@ -523,7 +522,7 @@ def bulk_update_quantity():
 # == User Role Management ==
 @app.route('/api/users', methods=['GET'])
 @token_required
-# @roles_required('admin')
+@roles_required('admin')
 def get_users():
     """Admin: List users and their roles."""
     logging.debug("Attempting to fetch users and roles...")
@@ -678,7 +677,7 @@ def get_user_role(user_id):
 
 @app.route('/api/users/<uuid:user_id>/role', methods=['PUT'])
 @token_required
-# @roles_required('admin')
+@roles_required('admin')
 def assign_user_role(user_id):
     """Admin: Assign or update the role of a specific user."""
     data = request.get_json()
@@ -733,7 +732,7 @@ def assign_user_role(user_id):
 # == Reports and Alerts ==
 @app.route('/api/alerts/low-stock', methods=['GET'])
 @token_required
-# @roles_required('admin', 'manager')
+@roles_required('admin', 'manager')
 def get_low_stock_alerts():
     """Admin/Manager: Get items below the low stock threshold."""
     try:
@@ -747,7 +746,7 @@ def get_low_stock_alerts():
 
 @app.route('/api/reports/inventory/monthly', methods=['GET'])
 @token_required
-# @roles_required('admin')
+@roles_required('admin')
 def get_monthly_inventory_report():
     """Admin: Generate a monthly inventory report (basic: current snapshot)."""
     # More complex reports might involve querying audit logs or historical snapshots.
@@ -783,7 +782,7 @@ def get_monthly_inventory_report():
 # == Audit Logs ==
 @app.route('/api/audit-logs', methods=['GET'])
 @token_required
-# @roles_required('admin')
+@roles_required('admin')
 def get_audit_logs():
     """Admin: View audit log entries with filtering."""
     try:
@@ -822,7 +821,7 @@ def get_audit_logs():
 
 @app.route('/api/items/<uuid:item_id>/trends', methods=['GET'])
 @token_required
-# @roles_required('admin', 'manager', 'viewer')
+@roles_required('admin', 'manager', 'viewer')
 def get_item_trends(item_id):
     """Get historical quantity data for charting."""
     try:
