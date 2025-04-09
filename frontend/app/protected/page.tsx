@@ -1,10 +1,9 @@
 // page.tsx
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { createClient } from "@/utils/supabase/server"; // Use server client here
-import { redirect } from "next/navigation";
-import ApiTestButtons from "../ApiTestButtons";
 import { getUserRole } from "@/lib/api/users";
+import { createClient } from "@/utils/supabase/server";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function ProtectedPage() {
   // Use the server client to interact with Supabase auth within the server component
@@ -82,10 +81,6 @@ export default async function ProtectedPage() {
         </div>
       </div>
 
-      {/* Pass token to ApiTestButtons if they also make API calls */}
-      {/* <ApiTestButtons authToken={accessToken} /> */}
-      {/* <ApiTestButtons /> Assuming ApiTestButtons uses client-side fetching */}
-
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {!roleError && userRole === "admin" && (
@@ -115,7 +110,7 @@ export default async function ProtectedPage() {
             </Button>
           </Link>
         )}
-        
+
         {!roleError && !userRole && (
           <div className="w-full p-4 border rounded-md bg-yellow-50 text-yellow-700">
             <h3 className="font-medium">No Role Assigned</h3>
