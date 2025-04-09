@@ -6,4 +6,5 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 EXPOSE 8000
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+# Change the CMD to point to the 'app' variable inside the 'run.py' module
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "run:app"]
