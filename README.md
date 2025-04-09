@@ -6,7 +6,7 @@ A full-stack inventory management system featuring role-based access control (RB
 
 ---
 
-## ✨ Live Demo ✨
+## ✨ Live Demo
 
 You can access and try out the live application here:
 
