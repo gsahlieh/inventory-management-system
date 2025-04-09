@@ -1,23 +1,15 @@
 # app.py
 import os
 import io
-import json # Keep for request/response bodies
+import json
 import logging
 from functools import wraps
-from datetime import datetime # Keep for timestamps
-
-# Remove unused imports related to manual JWT validation
-# import jwt
-# import requests
-# from jwt.exceptions import (...)
-
+from datetime import datetime
 import pandas as pd
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, g, abort
 from flask_cors import CORS
 from supabase import create_client, Client
-# Import the specific exception for auth errors from gotrue-py (used by supabase-py)
-# from gotrue import AuthApiError
 
 
 # --- Basic Logging Setup ---
@@ -26,14 +18,13 @@ logging.basicConfig(level=logging.DEBUG) # Keep DEBUG for detailed logs
 # --- Load Environment Variables ---
 load_dotenv()
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") # Service role key is still needed for backend operations
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
 # --- Environment Variable Validation ---
 missing_vars = []
 if not SUPABASE_URL: missing_vars.append("SUPABASE_URL")
 if not SUPABASE_KEY: missing_vars.append("SUPABASE_SERVICE_ROLE_KEY")
-# SUPABASE_AUTH_URL is no longer strictly needed for validation itself
 if missing_vars:
     raise ValueError(f"Missing environment variables: {', '.join(missing_vars)}")
 
@@ -89,7 +80,6 @@ def log_audit(action, table_name=None, record_id=None, old_values=None, new_valu
 
 
 # --- Authentication & Authorization Decorators ---
-
 def token_required(f):
     """Decorator to validate JWT token using supabase.auth.get_user()."""
     @wraps(f)
@@ -223,12 +213,9 @@ def not_found(e):
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    # Use original exception if available, otherwise the generic description
     error_details = getattr(e, 'original_exception', str(e))
-    # Check if it's an HTTPException with a description
     description = getattr(e, 'description', str(error_details))
     logging.exception(f"Internal Server Error: {description}") # Log traceback
-    # Return the description from abort() if available, otherwise generic message
     return jsonify(error=description or "An internal server error occurred."), 500
 
 
@@ -262,7 +249,6 @@ def add_item():
              abort(500, description="Failed to save item to database.")
 
         created_item = result.data[0]
-        # Log audit uses g.user_id set by token_required
         log_audit(action="CREATE_ITEM", table_name="items", record_id=created_item['id'], new_values=created_item)
         return jsonify(created_item), 201
 
@@ -420,10 +406,6 @@ def delete_item(item_id):
         # Perform delete
         result = supabase.table("items").delete().eq("id", str(item_id)).execute()
 
-        # Check if deletion was successful (Supabase delete might not return data on success)
-        # A more robust check might involve verifying the item is gone, but checking the response status/count is typical
-        # Assuming success if no exception is raised and maybe checking response metadata if available
-
         log_audit(action="DELETE_ITEM", table_name="items", record_id=item_id, old_values=old_values)
         return jsonify({"message": "Item deleted successfully"}), 200 # Or 204 No Content
 
@@ -501,7 +483,6 @@ def bulk_update_quantity():
                 results["failed"] += 1
                 results["errors"].append(f"Row {index + 2}: Failed to update item {item_id_str} - {e}")
 
-        # Log the entire bulk operation
         log_audit(
             action="BULK_UPDATE_QUANTITY",
             table_name="items",
@@ -527,7 +508,6 @@ def get_users():
     """Admin: List users and their roles."""
     logging.debug("Attempting to fetch users and roles...")
     try:
-        # 1. Fetch roles from user_roles table
         logging.debug("Fetching data from user_roles...")
         roles_result = supabase.table("user_roles").select("user_id, role").execute()
 
@@ -540,7 +520,6 @@ def get_users():
             logging.info("No users found in user_roles table.")
             return jsonify([])
 
-        # 2. Prepare list of user IDs safely
         user_ids = []
         try:
             for u in roles_result.data:
@@ -558,18 +537,11 @@ def get_users():
              abort(500, description="Internal error processing role data.")
 
         # 3. Fetch corresponding emails from auth.users
-        # --- CORRECTED APPROACH for querying auth.users ---
         logging.debug(f"Fetching emails for {len(user_ids)} users from auth.users...")
         try:
-            # Use the admin interface for auth operations when using service key
-            # This is generally safer and more intended for backend auth schema access.
-            # Note: list_users() might have pagination, handle if necessary for large user bases.
-            # We filter *after* fetching, which isn't ideal for performance but works for moderate numbers.
-            # A more performant way might involve a custom DB function/view if needed.
 
             list_users_response = supabase.auth.admin.list_users()
 
-            # Check if the response is a list (newer versions) or an object with a 'users' attribute (older versions)
             auth_users_list = []
             if isinstance(list_users_response, list):
                  auth_users_list = list_users_response
@@ -579,7 +551,6 @@ def get_users():
                  logging.error(f"Unexpected response type from list_users: {type(list_users_response)}")
                  abort(500, description="Failed to parse user list from authentication system.")
 
-            # Filter the fetched users based on the user_ids we have roles for
             filtered_users_data = [
                 {"id": str(user.id), "email": user.email}
                 for user in auth_users_list if str(user.id) in user_ids
@@ -590,19 +561,15 @@ def get_users():
              # Catch potential errors during the admin API call
              logging.exception(f"Error calling supabase.auth.admin.list_users(): {e}")
              abort(500, description="Failed to retrieve user details from authentication system.")
-        # --- END OF CORRECTION ---
 
 
-        # 4. Combine data using a map for efficiency and safety
         users_map = {}
         try:
-            # Use the filtered_users_data list
             users_map = {str(u['id']): u.get('email') for u in filtered_users_data if 'id' in u}
         except Exception as e:
              logging.exception(f"Unexpected error creating users_map from filtered auth data: {e}")
              abort(500, description="Internal error processing user details.")
 
-        # 5. Prepare final list safely
         users_with_roles = []
         for role_info in roles_result.data:
             user_id = str(role_info.get('user_id'))
@@ -610,7 +577,7 @@ def get_users():
                 users_with_roles.append({
                     "user_id": user_id,
                     "role": role_info.get('role', 'N/A'),
-                    "email": users_map.get(user_id, "N/A") # Use map, default to N/A
+                    "email": users_map.get(user_id, "N/A")
                 })
 
         logging.debug(f"Successfully prepared list of {len(users_with_roles)} users with roles.")
@@ -626,45 +593,36 @@ def get_users():
 @roles_required('admin', 'manager', 'viewer')
 def get_user_role(user_id):
     """Get the role of a specific user."""
-    target_user_id = str(user_id) # Ensure it's a string for comparison
+    target_user_id = str(user_id)
     logging.debug(f"Attempting to fetch role for user_id: {target_user_id}")
 
     try:
-        # Fetch the user's role from the user_roles table
         result = supabase.table("user_roles") \
             .select("role") \
             .eq("user_id", target_user_id) \
             .maybe_single() \
             .execute()
 
-        # Check if data was returned
         if not result.data:
-            # Before returning 404, quickly check if the user exists in auth.users
-            # This distinguishes between "user exists but has no role" and "user doesn't exist"
             try:
                 user_check = supabase.auth.admin.get_user_by_id(target_user_id)
                 if user_check:
                      logging.warning(f"User {target_user_id} exists in auth but not in user_roles table.")
-                     # Depending on policy, you might return 404 or 403 (role not assigned)
                      abort(404, description="User role not found or assigned.")
                 else:
-                    # This case should be rare if user_id is a valid UUID from auth
                     logging.warning(f"User {target_user_id} not found in auth system either.")
                     abort(404, description="User not found.")
             except Exception as auth_e:
-                 # Handle potential errors from get_user_by_id (e.g., user not found error)
                  if "User not found" in str(auth_e):
                       logging.warning(f"User {target_user_id} not found in auth system.")
                       abort(404, description="User not found.")
                  else:
                       logging.error(f"Error checking user existence in auth: {auth_e}")
-                      # Fallback to original 404 if auth check fails unexpectedly
                       abort(404, description="User role not found.")
 
 
         user_role = result.data.get("role")
         if not user_role:
-             # This case means the record exists but the role column is null/empty
              logging.warning(f"Role data is missing for user_id: {target_user_id}")
              abort(404, description="User role data is incomplete.")
 
@@ -804,7 +762,6 @@ def get_audit_logs():
             query = query.eq('action', action_filter)
         if start_date:
              query = query.gte('timestamp', start_date)
-        # Add end_date filter etc.
 
         result = query.execute()
 
@@ -825,16 +782,9 @@ def get_audit_logs():
 def get_item_trends(item_id):
     """Get historical quantity data for charting."""
     try:
-        # Query audit logs for quantity changes for this specific item
-        # We need actions like CREATE_ITEM, UPDATE_QUANTITY, UPDATE_ITEM (if quantity changed), BULK_UPDATE_QUANTITY
-        # This requires parsing the 'new_values' or having dedicated quantity change logs.
-        # Let's query for relevant actions and extract quantity.
-
-        # Define relevant actions that signify a quantity change
+ 
         quantity_actions = ['CREATE_ITEM', 'UPDATE_QUANTITY', 'UPDATE_ITEM', 'BULK_UPDATE_QUANTITY'] # Add DELETE_ITEM if you want to show it going to 0
 
-        # Fetch audit logs related to this item and quantity changes
-        # Ordering by timestamp is crucial
         result = supabase.table("audit_logs") \
             .select("timestamp, action, new_values") \
             .eq("table_name", "items") \
@@ -844,7 +794,6 @@ def get_item_trends(item_id):
             .execute()
 
         if not result.data:
-            # If no history, maybe return current quantity?
              current_item = supabase.table("items").select("quantity, created_at").eq("id", str(item_id)).maybe_single().execute()
              if current_item.data:
                   return jsonify({
@@ -855,7 +804,6 @@ def get_item_trends(item_id):
                   return jsonify({"labels": [], "quantities": []}) # Item not found or no history
 
 
-        # Process the logs to extract timestamp and quantity *at that time*
         labels = []
         quantities = []
 
@@ -870,14 +818,11 @@ def get_item_trends(item_id):
                 elif log['action'] == 'CREATE_ITEM' and 'quantity' in new_values: # Handle creation
                      quantity = new_values['quantity']
                 elif log['action'] == 'BULK_UPDATE_QUANTITY' and 'updated_items' in new_values:
-                     # Find this specific item in the bulk log
                      for item_log in new_values.get('updated_items', []):
                           if item_log.get('item_id') == str(item_id):
                                quantity = item_log.get('new_quantity')
                                break
-                # Add handling for UPDATE_ITEM if quantity is nested differently
 
-            # Only add data point if we successfully extracted a quantity
             if quantity is not None:
                  # Avoid duplicate timestamps if multiple logs happen at once (take latest)
                  if labels and labels[-1] == timestamp:
@@ -899,8 +844,4 @@ def home():
     """A simple route to check if the server is running."""
     return jsonify({"message": "Flask inventory backend is running!"})
 
-# --- Run the App ---
-# if __name__ == '__main__':
-#     # Use debug=True for development ONLY, it enables auto-reloading and detailed errors
-#     # Set host='0.0.0.0' to make it accessible on your network (e.g., from Next.js dev server)
-#     app.run(host='0.0.0.0', port=5001, debug=True)
+# Command to run locally (non-docker) I was using: flask run --host=0.0.0.0 --port=5001
