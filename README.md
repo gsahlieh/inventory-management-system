@@ -16,37 +16,6 @@ Use the sample admin credentials provided to explore all features.
 
 ---
 
-## Features
-
-- **Role-Based Access Control (RBAC):** Different users (Admin, Manager, Viewer) have specific permissions.
-- **Authentication:** Secure user sign-up (with email verification) and sign-in powered by Supabase Auth.
-- **Inventory Management:** Add, view, edit, and delete inventory items (permissions vary by role).
-- **Quantity Updates:** Managers can update item quantities individually or via bulk CSV upload.
-- **Audit Logging:** Tracks user actions (creations, updates, deletions) across key tables.
-- **Low-Stock Alerts:** Managers can view items with quantities below a certain threshold (e.g., < 10).
-- **Inventory Trends:** Visualize item quantity changes over time using Chart.js (accessible to all roles).
-- **Monthly Reports:** Admins can view and generate downloadable PDF inventory reports.
-- **User Management:** Admins can view all users and assign/change their roles.
-
-### Role Permissions
-
-- **Admin:**
-  - Manage Items: Full CRUD operations (Create, Read, Update, Delete).
-  - Manage Users: View users, assign/change user roles (Admin, Manager, Viewer).
-  - View Audit Logs: See a complete history of system actions.
-  - View & Generate Reports: Access monthly inventory reports and download PDFs.
-  - View Item Trends: Visualize quantity history for items.
-- **Manager:**
-  - Manage Inventory: Update item quantities (single or bulk CSV upload).
-  - View Low Stock Alerts: Identify items needing replenishment.
-  - View Items: Browse inventory and view details.
-  - View Item Trends: Visualize quantity history for items.
-- **Viewer:**
-  - Browse Inventory: View items, search by name/category, and see full details.
-  - View Item Trends: Visualize quantity history for items.
-
----
-
 ## Technology Stack
 
 - **Frontend:** Next.js, React, TypeScript, Tailwind CSS, Chart.js
@@ -83,6 +52,37 @@ The application utilizes a Supabase PostgreSQL database with the following key t
   - `created_at`: Timestamp.
 
 ![Application Screenshot](database-schema.png)
+
+---
+
+## Features
+
+- **Role-Based Access Control (RBAC):** Different users (Admin, Manager, Viewer) have specific permissions.
+- **Authentication:** Secure user sign-up (with email verification) and sign-in powered by Supabase Auth.
+- **Inventory Management:** Add, view, edit, and delete inventory items (permissions vary by role).
+- **Quantity Updates:** Managers can update item quantities individually or via bulk CSV upload.
+- **Audit Logging:** Tracks user actions (creations, updates, deletions) across key tables.
+- **Low-Stock Alerts:** Managers can view items with quantities below a certain threshold (e.g., < 10).
+- **Inventory Trends:** Visualize item quantity changes over time using Chart.js (accessible to all roles).
+- **Monthly Reports:** Admins can view and generate downloadable PDF inventory reports.
+- **User Management:** Admins can view all users and assign/change their roles.
+
+### Role Permissions
+
+- **Admin:**
+  - Manage Items: Full CRUD operations (Create, Read, Update, Delete).
+  - Manage Users: View users, assign/change user roles (Admin, Manager, Viewer).
+  - View Audit Logs: See a complete history of system actions.
+  - View & Generate Reports: Access monthly inventory reports and download PDFs.
+  - View Item Trends: Visualize quantity history for items.
+- **Manager:**
+  - Manage Inventory: Update item quantities (single or bulk CSV upload).
+  - View Low Stock Alerts: Identify items needing replenishment.
+  - View Items: Browse inventory and view details.
+  - View Item Trends: Visualize quantity history for items.
+- **Viewer:**
+  - Browse Inventory: View items, search by name/category, and see full details.
+  - View Item Trends: Visualize quantity history for items.
 
 ---
 
@@ -151,5 +151,3 @@ _Please use these credentials responsibly for testing purposes only._
 - Deployment is managed via the `docker-compose.yml` file.
 - **Frontend URL:** [https://inventory-management-system-frontend-5c1h.onrender.com/](https://inventory-management-system-frontend-5c1h.onrender.com/)
 - **Backend URL:** [https://inventory-management-system-hwsh.onrender.com/](https://inventory-management-system-hwsh.onrender.com/)
-
----
