@@ -1,4 +1,4 @@
-import Link from 'next/link'; // Import Link for navigation if needed
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default async function Home() {
@@ -23,7 +23,6 @@ export default async function Home() {
                 asChild
                 size="lg"
                 variant={"outline"}
-                className="opacity-75 cursor-none pointer-events-none"
               >
                 <Link href="/sign-in">Sign in</Link>
               </Button>
@@ -31,7 +30,6 @@ export default async function Home() {
                 asChild
                 size="lg"
                 variant={"default"}
-                className="opacity-75 cursor-none pointer-events-none"
               >
                 <Link href="/sign-up">Sign up</Link>
               </Button>
