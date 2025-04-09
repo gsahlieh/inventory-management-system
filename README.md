@@ -82,7 +82,7 @@ The application utilizes a Supabase PostgreSQL database with the following key t
   - `old_values` (JSONB, nullable): Previous state of the record (if applicable).
   - `created_at`: Timestamp.
 
-<img src="database-schema.png" alt="Database Schema" width="400" />
+![Application Screenshot](database-schema.png)
 
 ---
 
