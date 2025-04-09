@@ -142,14 +142,14 @@ _Note: `<item_id>` and `<user_id>` should be replaced with the actual UUIDs. Fil
     # Build the Docker images
     docker compose build
 
-    # Start the services in detached mode
-    docker compose up -d
+    # Start the services
+    docker compose up
     ```
 
 4.  **Access the Application:**
 
     - Frontend: `http://localhost:3000`
-    - Backend API: `http://localhost:5000`
+    - Backend API: `http://localhost:8000`
 
 5.  **Stopping the Application:**
     ```bash
