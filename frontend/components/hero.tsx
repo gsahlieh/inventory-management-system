@@ -3,8 +3,8 @@ import SupabaseLogo from "./supabase-logo";
 
 export default function Header() {
   return (
-    <div className="flex flex-col gap-16 items-center">
-      <div className="flex gap-8 justify-center items-center">
+    <div className="flex flex-col gap-8 sm:gap-16 items-center">
+      <div className="flex gap-6 sm:gap-8 justify-center items-center">
         <a
           href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
           target="_blank"
@@ -18,7 +18,7 @@ export default function Header() {
         </a>
       </div>
       <h1 className="sr-only">Supabase and Next.js Starter Template</h1>
-      <p className="text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center">
+      <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center px-4 sm:px-0">
         The fastest way to build apps with{" "}
         <a
           href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
