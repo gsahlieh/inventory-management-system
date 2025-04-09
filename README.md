@@ -19,8 +19,8 @@ Use the sample admin credentials provided to explore all features.
 ## Technology Stack
 
 - **Frontend:** Next.js, React, TypeScript, Tailwind CSS, Chart.js
-- **Backend:** Python, Flask, Flask-RESTful, Flask-SQLAlchemy (interacting via Supabase client)
-- **Database:** Supabase (PostgreSQL)
+- **Backend:** Python, Flask
+- **Database:** PostgreSQL (Supabase)
 - **Authentication:** Supabase Auth
 - **Deployment:** Render (Separate Web Services for Frontend/Backend)
 - **Containerization:** Docker, Docker Compose
