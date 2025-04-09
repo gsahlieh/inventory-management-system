@@ -9,7 +9,7 @@ export default async function Home() {
           <div className="max-w-2xl mx-auto">
             <div className="text-6xl sm:text-7xl md:text-8xl mb-6">📦</div>
 
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl mb-4">
+            <h1 className="text-4xl text-primary font-semibold tracking-tight sm:text-5xl md:text-6xl mb-4">
               Organize Your Inventory
             </h1>
 
@@ -18,7 +18,7 @@ export default async function Home() {
               continue or create an account.
             </p>
 
-            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4 text-primary">
               <Button
                 asChild
                 size="lg"
