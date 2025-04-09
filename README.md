@@ -86,6 +86,32 @@ The application utilizes a Supabase PostgreSQL database with the following key t
 
 ---
 
+## Backend API Routes (Flask)
+
+The Python Flask backend provides the following API endpoints. Routes under `/api/` require authentication via a Supabase-validated JWT (sent as a Bearer token in the Authorization header) and authorization based on specific user roles, both enforced by decorators. Implementation of routes is done in `/backend/app.py`
+
+| Method   | Path                              | Required Role(s)             | Description                                            |
+| :------- | :-------------------------------- | :--------------------------- | :----------------------------------------------------- |
+| `POST`   | `/api/items`                      | `admin`                      | Add a new inventory item.                              |
+| `GET`    | `/api/items`                      | `admin`, `manager`, `viewer` | List all inventory items.                              |
+| `GET`    | `/api/items/<item_id>`            | `admin`, `manager`, `viewer` | Get details of a specific item.                        |
+| `PUT`    | `/api/items/<item_id>`            | `admin`, `manager`           | Update all details of a specific item.                 |
+| `PATCH`  | `/api/items/<item_id>/quantity`   | `admin`, `manager`           | Update only the quantity of a specific item.           |
+| `DELETE` | `/api/items/<item_id>`            | `admin`                      | Delete an inventory item.                              |
+| `POST`   | `/api/items/bulk-update-quantity` | `manager`                    | Bulk update item quantities via CSV upload.            |
+| `GET`    | `/api/users`                      | `admin`                      | List all users and their assigned roles.               |
+| `GET`    | `/api/users/<user_id>/role`       | `admin`, `manager`, `viewer` | Get the role of a specific user.                       |
+| `PUT`    | `/api/users/<user_id>/role`       | `admin`                      | Assign or update the role for a specific user.         |
+| `GET`    | `/api/alerts/low-stock`           | `admin`, `manager`           | Get items with quantity below the low stock threshold. |
+| `GET`    | `/api/reports/inventory/monthly`  | `admin`                      | Generate a monthly inventory report (current state).   |
+| `GET`    | `/api/audit-logs`                 | `admin`                      | View audit log entries (supports filtering/paging).    |
+| `GET`    | `/api/items/<item_id>/trends`     | `admin`, `manager`, `viewer` | Get historical quantity data for a specific item.      |
+| `GET`    | `/`                               | _None_                       | Base route to confirm the backend is running.          |
+
+_Note: `<item_id>` and `<user_id>` should be replaced with the actual UUIDs._
+
+---
+
 ## Getting Started / Running Locally
 
 ### Prerequisites
