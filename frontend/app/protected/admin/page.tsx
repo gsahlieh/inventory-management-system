@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [editingRole, setEditingRole] = useState("");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Trend Chart State
   const [selectedItemForTrend, setSelectedItemForTrend] = useState<
@@ -89,6 +90,9 @@ export default function AdminDashboard() {
         router.push("/sign-in");
         return;
       }
+
+      // Store current user's ID
+      setCurrentUserId(session.user.id);
 
       try {
         const roleData = await getUserRole(
@@ -803,6 +807,8 @@ export default function AdminDashboard() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleEditUser(user)}
+                          disabled={user.user_id === currentUserId}
+                          title={user.user_id === currentUserId ? "You cannot change your own role" : "Change user role"}
                         >
                           Change Role
                         </Button>
@@ -846,8 +852,16 @@ export default function AdminDashboard() {
                     >
                       Cancel
                     </Button>
-                    <Button type="submit">Save Changes</Button>
+                    <Button 
+                      type="submit"
+                      disabled={editingUser.user_id === currentUserId}
+                    >
+                      Save Changes
+                    </Button>
                   </div>
+                  {editingUser.user_id === currentUserId && (
+                    <p className="text-sm text-red-500 mt-2">You cannot change your own role.</p>
+                  )}
                 </form>
               </div>
             </div>
