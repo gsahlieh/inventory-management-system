@@ -278,7 +278,7 @@ export default function ManagerDashboard() {
           variant={activeTab === "inventory" ? "default" : "outline"}
           onClick={() => handleTabChange("inventory")}
         >
-          Inventory
+          Manage Inventory
         </Button>
         <Button
           variant={activeTab === "alerts" ? "default" : "outline"}
