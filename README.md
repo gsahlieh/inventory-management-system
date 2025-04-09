@@ -88,29 +88,27 @@ The application utilizes a Supabase PostgreSQL database with the following key t
 
 ## Backend API Routes (Flask)
 
-The Python Flask backend provides the following API endpoints. Routes under `/api/` require authentication via a Supabase-validated JWT (sent as a Bearer token in the Authorization header) and authorization based on specific user roles, both enforced by decorators. Implementation of routes is done in `/backend/app.py`
+The Python Flask backend provides the following API endpoints. Routes are organized using Flask Blueprints within the `backend/app/routes/` directory. Routes under `/api/` require authentication via a Supabase-validated JWT (sent as a Bearer token in the Authorization header) and authorization based on specific user roles, both enforced by decorators defined in `backend/app/utils/auth.py`.
 
-| Method   | Path                              | Required Role(s)             | Description                                            |
-| :------- | :-------------------------------- | :--------------------------- | :----------------------------------------------------- |
-| `POST`   | `/api/items`                      | `admin`                      | Add a new inventory item.                              |
-| `GET`    | `/api/items`                      | `admin`, `manager`, `viewer` | List all inventory items.                              |
-| `GET`    | `/api/items/<item_id>`            | `admin`, `manager`, `viewer` | Get details of a specific item.                        |
-| `PUT`    | `/api/items/<item_id>`            | `admin`, `manager`           | Update all details of a specific item.                 |
-| `PATCH`  | `/api/items/<item_id>/quantity`   | `admin`, `manager`           | Update only the quantity of a specific item.           |
-| `DELETE` | `/api/items/<item_id>`            | `admin`                      | Delete an inventory item.                              |
-| `POST`   | `/api/items/bulk-update-quantity` | `manager`                    | Bulk update item quantities via CSV upload.            |
-| `GET`    | `/api/users`                      | `admin`                      | List all users and their assigned roles.               |
-| `GET`    | `/api/users/<user_id>/role`       | `admin`, `manager`, `viewer` | Get the role of a specific user.                       |
-| `PUT`    | `/api/users/<user_id>/role`       | `admin`                      | Assign or update the role for a specific user.         |
-| `GET`    | `/api/alerts/low-stock`           | `admin`, `manager`           | Get items with quantity below the low stock threshold. |
-| `GET`    | `/api/reports/inventory/monthly`  | `admin`                      | Generate a monthly inventory report (current state).   |
-| `GET`    | `/api/audit-logs`                 | `admin`                      | View audit log entries (supports filtering/paging).    |
-| `GET`    | `/api/items/<item_id>/trends`     | `admin`, `manager`, `viewer` | Get historical quantity data for a specific item.      |
-| `GET`    | `/`                               | _None_                       | Base route to confirm the backend is running.          |
+| Method   | Path                              | Required Role(s)             | Description                                            | File Location           |
+| :------- | :-------------------------------- | :--------------------------- | :----------------------------------------------------- | :---------------------- |
+| `POST`   | `/api/items`                      | `admin`                      | Add a new inventory item.                              | `app/routes/items.py`   |
+| `GET`    | `/api/items`                      | `admin`, `manager`, `viewer` | List all inventory items.                              | `app/routes/items.py`   |
+| `GET`    | `/api/items/<item_id>`            | `admin`, `manager`, `viewer` | Get details of a specific item.                        | `app/routes/items.py`   |
+| `PUT`    | `/api/items/<item_id>`            | `admin`, `manager`           | Update all details of a specific item.                 | `app/routes/items.py`   |
+| `PATCH`  | `/api/items/<item_id>/quantity`   | `admin`, `manager`           | Update only the quantity of a specific item.           | `app/routes/items.py`   |
+| `DELETE` | `/api/items/<item_id>`            | `admin`                      | Delete an inventory item.                              | `app/routes/items.py`   |
+| `POST`   | `/api/items/bulk-update-quantity` | `manager`                    | Bulk update item quantities via CSV upload.            | `app/routes/items.py`   |
+| `GET`    | `/api/users`                      | `admin`                      | List all users and their assigned roles.               | `app/routes/users.py`   |
+| `GET`    | `/api/users/<user_id>/role`       | `admin`, `manager`, `viewer` | Get the role of a specific user.                       | `app/routes/users.py`   |
+| `PUT`    | `/api/users/<user_id>/role`       | `admin`                      | Assign or update the role for a specific user.         | `app/routes/users.py`   |
+| `GET`    | `/api/alerts/low-stock`           | `admin`, `manager`           | Get items with quantity below the low stock threshold. | `app/routes/reports.py` |
+| `GET`    | `/api/reports/inventory/monthly`  | `admin`                      | Generate a monthly inventory report (current state).   | `app/routes/reports.py` |
+| `GET`    | `/api/audit-logs`                 | `admin`                      | View audit log entries (supports filtering/paging).    | `app/routes/audit.py`   |
+| `GET`    | `/api/items/<item_id>/trends`     | `admin`, `manager`, `viewer` | Get historical quantity data for a specific item.      | `app/routes/misc.py`    |
+| `GET`    | `/`                               | _None_                       | Base route to confirm the backend is running.          | `app/routes/misc.py`    |
 
-_Note: `<item_id>` and `<user_id>` should be replaced with the actual UUIDs._
-
----
+_Note: `<item_id>` and `<user_id>` should be replaced with the actual UUIDs. File locations are relative to the `backend/` directory._
 
 ## Getting Started / Running Locally
 
