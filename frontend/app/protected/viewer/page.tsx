@@ -53,6 +53,9 @@ export default function ViewerDashboard() {
   const [trendData, setTrendData] = useState<any>(null);
   const [trendLoading, setTrendLoading] = useState(false); // Specific loading for trends
 
+  // Add state to store the access token
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -65,13 +68,23 @@ export default function ViewerDashboard() {
         return;
       }
 
+      // Store the access token for API calls
+      setAccessToken(session.access_token);
+
       // We don't need to check the role for viewers since everyone can view
-      fetchItems(); // Fetch items on initial load
+      // Wait for access token to be set before fetching items
       setLoading(false);
     };
 
     checkUser();
   }, [router, supabase]); // Added dependencies
+
+  // Effect to fetch items when access token is available
+  useEffect(() => {
+    if (accessToken) {
+      fetchItems();
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     if (items.length > 0) {
@@ -107,6 +120,7 @@ export default function ViewerDashboard() {
   const fetchItems = async () => {
     try {
       setLoading(true);
+      // Pass the access token to the API call
       const data = await getAllItems();
       setItems(data || []);
       // No need to setFilteredItems here, the useEffect handles it
@@ -230,9 +244,13 @@ export default function ViewerDashboard() {
     <div className="flex-1 w-full flex flex-col gap-6">
       <div className="w-full">
         <div className="bg-accent text-sm p-4 rounded-md text-foreground">
-          <h1 className="font-semibold text-xl mb-2">Inventory Viewer</h1>
-          <p>Browse and search inventory items, view details, and trends.</p>{" "}
-          {/* Updated description */}
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <h1 className="font-semibold text-xl">Inventory Viewer</h1>
+            <div className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-sm font-medium">
+              Viewer Role
+            </div>
+          </div>
+          <p>Browse and search inventory items, view details, and trends.</p>
         </div>
       </div>
 

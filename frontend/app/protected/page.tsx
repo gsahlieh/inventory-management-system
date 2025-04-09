@@ -91,7 +91,7 @@ export default async function ProtectedPage() {
         {!roleError && userRole === "admin" && (
           <Link href="/protected/admin" className="w-full">
             <Button variant="default" size="lg" className="w-full h-32 text-lg">
-              Admin Dashboard
+              Go to Admin Dashboard
             </Button>
           </Link>
         )}
@@ -103,7 +103,7 @@ export default async function ProtectedPage() {
               size="lg"
               className="w-full h-32 text-lg"
             >
-              Manager Dashboard
+              Go to Manager Dashboard
             </Button>
           </Link>
         )}
@@ -111,11 +111,17 @@ export default async function ProtectedPage() {
         {!roleError && (userRole === "viewer") && (
           <Link href="/protected/viewer" className="w-full">
             <Button variant="outline" size="lg" className="w-full h-32 text-lg">
-              Viewer Dashboard
+              Go to Viewer Dashboard
             </Button>
           </Link>
         )}
-
+        
+        {!roleError && !userRole && (
+          <div className="w-full p-4 border rounded-md bg-yellow-50 text-yellow-700">
+            <h3 className="font-medium">No Role Assigned</h3>
+            <p className="text-sm mt-1">You don't have a role assigned yet. Please contact an administrator.</p>
+          </div>
+        )}
       </div>
     </div>
   );

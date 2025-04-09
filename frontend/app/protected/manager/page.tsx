@@ -264,7 +264,12 @@ export default function ManagerDashboard() {
       {/* Header */}
       <div className="w-full">
         <div className="bg-accent text-sm p-4 rounded-md text-foreground">
-          <h1 className="font-semibold text-xl mb-2">Manager Dashboard</h1>
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <h1 className="font-semibold text-xl">Manager Dashboard</h1>
+            <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-sm font-medium">
+              Manager Role
+            </div>
+          </div>
           <p>
             As a manager, you can update inventory quantities, generate
             low-stock alerts, and upload bulk updates.

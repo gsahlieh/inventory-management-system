@@ -429,7 +429,12 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="w-full">
         <div className="bg-accent text-sm p-4 rounded-md text-foreground">
-          <h1 className="font-semibold text-xl mb-2">Admin Dashboard</h1>
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <h1 className="font-semibold text-xl">Admin Dashboard</h1>
+            <div className="bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full text-sm font-medium">
+              Admin Role
+            </div>
+          </div>
           <p>
             As an admin, you can manage inventory items, user roles, view audit
             logs, and access inventory reports.
